@@ -632,10 +632,11 @@ function openShareModal() {
     f: state.fontSize,
     a: state.align,
   };
-  let url = `${location.origin}${location.pathname}`;
+  const base = location.href.replace(/\/[^/]*$/, '');
+  let url = `${base}/bloom.html`;
   try {
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    url = `${location.origin}${location.pathname}#bloom=${encoded}`;
+    url = `${base}/bloom.html?b=${encoded}`;
   } catch(e) {}
 
   el.shareLinkIn.value = url;
