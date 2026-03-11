@@ -1,5 +1,5 @@
 /* ================================
-   KARWAA: The Flower Shop
+   KARWAAn
    script.js — v5 (mobile-first, zero CDN deps for interactions)
 ================================ */
 'use strict';
@@ -632,7 +632,8 @@ function openShareModal() {
     f: state.fontSize,
     a: state.align,
   };
-  const base = location.href.replace(/\/[^/]*$/, '');
+  // Resolve bloom.html relative to the current page's directory
+  const base    = location.href.replace(/\/[^/]*$/, '');
   let url = `${base}/bloom.html`;
   try {
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
