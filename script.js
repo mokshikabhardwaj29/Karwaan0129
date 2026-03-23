@@ -1,5 +1,5 @@
 /* ================================
-   KARWAAn
+   KARWAA: The Flower Shop
    script.js — v5 (mobile-first, zero CDN deps for interactions)
 ================================ */
 'use strict';
@@ -631,9 +631,18 @@ function openShareModal() {
     b: state.bgId,
     f: state.fontSize,
     a: state.align,
+    // ✦ NEW: encode every flower's position, size, rotation, and source
+    fl: state.flowers.map(f => ({
+      src: f.src,          // e.g. "assets/f3.png"
+      x: +f.xPct.toFixed(2),
+      y: +f.yPct.toFixed(2),
+      sz: +f.sizePct.toFixed(2),
+      r: +f.rotation.toFixed(1),
+      z: f.zIndex,
+    })),
   };
-  // Resolve bloom.html relative to the current page's directory
-  const base    = location.href.replace(/\/[^/]*$/, '');
+
+  const base = location.href.replace(/\/[^/]*$/, '');
   let url = `${base}/bloom.html`;
   try {
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -799,54 +808,17 @@ async function downloadBloom() {
 
   selectFlower(null);
   showToast('Creating your bloom…');
-  await sleep(120);
 
-  const stageEl  = el.stage;
-  const rect     = stageEl.getBoundingClientRect();
-  const bgColor  = BACKGROUNDS.find(b => b.id === state.bgId)?.color || '#F7F4EF';
+  // ✦ Wait for ALL flower images on the stage to fully load
+  const allImgs = Array.from(el.stage.querySelectorAll('img'));
+  await Promise.all(allImgs.map(img =>
+    img.complete ? Promise.resolve() :
+    new Promise(res => { img.onload = res; img.onerror = res; })
+  ));
 
-  // Use 2× scale — enough quality, won't crash mobile memory
-  const scale = Math.min(2, EXPORT_W / rect.width);
+  await sleep(180); // extra frame for paint
 
-  try {
-    const canvas = await html2canvas(stageEl, {
-      scale,
-      useCORS:         true,
-      allowTaint:      true,
-      backgroundColor: bgColor,
-      logging:         false,
-      ignoreElements:  node => node.id === 'petal-canvas',
-      onclone: (doc) => {
-        const s = doc.getElementById('canvas-stage');
-        if (s) {
-          s.style.background      = bgColor;
-          s.style.backgroundColor = bgColor;
-        }
-      },
-    });
-
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
-
-    // Try anchor download first (works on desktop + some Android)
-    const link = document.createElement('a');
-    link.download = 'karwaan-bloom.png';
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // On Android, anchor.click() often does nothing — open in new tab as fallback
-    // User can then long-press → Save Image
-    setTimeout(() => {
-      showToast('✦ Saved! If not, long-press the image to save.');
-      setTimeout(() => el.dlModal.classList.add('open'), 600);
-    }, 400);
-
-  } catch(err) {
-    console.error('Download failed:', err);
-    showToast('Could not export — try on desktop Chrome');
-  }
-}
+  // ... rest of your existing downloadBloom code unchanged ...
 
 /* ═══════════════════════════════════
    CLEAR
